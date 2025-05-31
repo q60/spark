@@ -106,6 +106,8 @@ defmodule Spark.Options do
     ]
   ]
 
+  @elixir_struct_types ~w[map_set stream uri date time date_time naive_date_time]a
+
   @moduledoc """
   Provides a standard API to handle keyword-list-based options.
 
@@ -171,6 +173,20 @@ defmodule Spark.Options do
     * `:number` - An integer or a float.
 
     * `:timeout` - A non-negative integer or the atom `:infinity`.
+
+    * `:map_set` - A `t:MapSet.t/0` data structure.
+
+    * `:stream` - A `t:Stream.t/0` - composable, lazy enumerable.
+
+    * `:uri` - A `t:URI.t/0` struct.
+
+    * `:date` - A `t:Date.t/0` struct which contains year, month, day and calendar.
+
+    * `:time` - A `t:Time.t/0` struct which contains hour, minute, second, microsecond and calendar fields.
+
+    * `:date_time` - A `t:DateTime.t/0` struct - a snapshot of a date and time at a given time zone.
+
+    * `:naive_date_time` - A `t:NaiveDateTime.t/0` struct - same as `t:DateTime.t/0` but contains no time zone.
 
     * `:pid` - A PID (process identifier).
 
@@ -384,6 +400,13 @@ defmodule Spark.Options do
     :pos_integer,
     :float,
     :number,
+    :map_set,
+    :stream,
+    :uri,
+    :date,
+    :time,
+    :date_time,
+    :naive_date_time,
     :module,
     :mfa,
     :mod_arg,
@@ -414,6 +437,13 @@ defmodule Spark.Options do
           | :float
           | :number
           | :timeout
+          | :map_set
+          | :stream
+          | :uri
+          | :date
+          | :time
+          | :date_time
+          | :naive_date_time
           | :pid
           | :reference
           | :mfa
@@ -887,6 +917,21 @@ defmodule Spark.Options do
   @doc false
   def validate_single_value(type, key, value) do
     validate_type(type, key, value)
+  end
+
+  defp validate_type(type, key, value) when type in @elixir_struct_types do
+    mod =
+      case type do
+        :map_set -> MapSet
+        :stream -> Stream
+        :uri -> URI
+        :date -> Date
+        :time -> Time
+        :date_time -> DateTime
+        :naive_date_time -> NaiveDateTime
+      end
+
+    validate_type({:struct, mod}, key, value)
   end
 
   defp validate_type(:integer, key, value) when not is_integer(value) do
